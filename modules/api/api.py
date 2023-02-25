@@ -2,6 +2,7 @@ import base64
 import io
 import time
 import datetime
+import uuid
 import uvicorn
 from threading import Lock
 from io import BytesIO
@@ -203,11 +204,14 @@ class Api:
                 processed = process_images(p)
             shared.state.end()
 
-        print(processed.images)
-
         b64images = list(map(encode_pil_to_base64, processed.images))
 
-        return TextToImageResponse(images=b64images, parameters=vars(txt2imgreq), info=processed.js())
+        # a bit dirty .. only consider one image
+        file_name = str(uuid.uuid4()) + '.png'
+        file_path = '/var/www/html/maze/' + file_name
+        processed.images[0].save(file_path)
+
+        return TextToImageResponse(images=b64images, parameters=vars(txt2imgreq), info=processed.js(), img_path=file_name)
 
     def img2imgapi(self, img2imgreq: StableDiffusionImg2ImgProcessingAPI):
         init_images = img2imgreq.init_images
